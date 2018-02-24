@@ -1,0 +1,143 @@
+---
+title: "hw01-shuai-shao.Rmd"
+output: github_document
+---
+#2)
+```{r}
+library(readr)
+col_types <- c(symboling = col_double(),
+           normalized_losses = col_double(),
+           make = col_character(), 
+           fuel_type = col_character(), 
+           aspiration = col_character(), 
+           num_of_doors = col_character(),
+           body_styles = col_character(),
+           drive_wheels = col_character(),
+           engine_location = col_character(), 
+           wheel_base = col_double(), 
+           length = col_double(), 
+           width = col_double(), 
+           height = col_double(), 
+           curb_weight = col_integer(), 
+           engine_type = col_character(), 
+           num_of_cylinders = col_character(), 
+           engine_size = col_integer(), 
+           fuel_system = col_character(), 
+           bore = col_double(), 
+           stroke = col_double(), 
+           compression_ratio = col_double(), 
+           horsepower = col_integer(), 
+           peak_rpm = col_integer(), 
+           city_mpg = col_integer(), 
+           highway_mpg = col_integer(), 
+           price = col_integer())
+
+auto <- read_csv('imports-85.data', col_types=col_types)
+str(auto)
+```
+
+```{r}
+names <- c('symboling', 'normalized_losses', 'make', 'fuel_type', 'aspiration', 
+           'num_of_doors', 'body_styles', 'drive_wheels', 'engine_location', 
+           'wheel_base', 'length', 'width', 'height', 'curb_weight', 
+           'engine_type', 'num_of_cylinders', 'engine_size', 'fuel_system', 
+           'bore', 'stroke', 'compression_ratio', 'horsepower', 'peak_rpm', 
+           'city_mpg', 'highway_mpg', 'price')
+
+colClasses <- c('double', 'double', rep('character',7),
+             rep('double',4), 'integer', 'character', 'character', 'integer',
+             'character', rep('double',3), rep('integer',5))
+auto <- read.csv('imports-85.data', col.names=names, 
+                 colClasses=colClasses, na.strings='?')
+str(auto)
+```
+
+#3) 
+# a. They take the values on the first row.
+# For numerical values, they appear as X[value].
+# For non-numerical values, they appear as [value]
+# where [value] is the corresponding value on the first row.
+# If [value] happens to be '?', it appears as '.'
+
+# b. They appear as V1, V2, V3, ... etc.
+# c. They appear as '?'. Or when colClasses is specified, they cause an error.
+# d. Because the default is to store non-numeric values as factors.
+# Factors only store the unique values as characters (and the specific value 
+# taken at an entry is stored as an integer). This is much cheaper in memory
+# than storing everything as a character, because many values repeat themselves.
+
+# e. It becomes a matrix i.e. a vector of vector Each vector at the first level
+# is a column of the dataframe, at the second level contains the entries in
+# that column.
+
+# 4)
+```{r}
+hist(auto$price, col='green')
+boxplot(auto$horsepower, horizontal=TRUE)
+
+tmp <- table(auto$body_styles)
+prop.table((tmp))
+tmp <- tmp[order(tmp, decreasing=TRUE)] 
+barplot(tmp)
+
+stars(auto[auto$aspiration=='turbo',
+           c('wheel_base', 'length', 'width', 'height', 'price')])
+```
+
+# 5)
+```{r}
+# a)
+mean(auto[auto$fuel_type=='gas','price'], na.rm=TRUE)
+# b)
+auto[auto$num_of_cylinders=='twelve', 'make']
+# c)
+tmp <- table(auto[auto$fuel_type=='diesel', 'make'])
+names(tmp)[which.max(tmp)]
+# d)
+auto[which.max(auto$horsepower), 'price']
+# e)
+quantile(auto$city_mpg, 0.1)
+# f)
+quantile(auto$highway_mpg, 0.9)
+# g)
+quantile(auto$city_mpg, 0.05)
+```
+
+# 6)
+# a) Returns NULL
+# b) 4
+# c) Because mpg is not a variable. "mpg" instead creates a string.
+# d) Not in general, unless the list has the same length as the number of rows
+# i.e. the following code will run, and each value in the column xyz will be assigned
+# the corresponding entry in the list
+# tmp <- as.list(1:204)
+# auto$xyz <- tmp
+# e) It returns a list of vectors, each vector contains the values in that column.
+# f) data.frame()
+
+# 7)
+```{r}
+qdat <- na.omit(auto[, c(-1,-2)])
+qdat <- qdat[, sapply(qdat, is.numeric)]
+cor(qdat)
+```
+# 8.1)
+```{r}
+pca_result <- prcomp(qdat, scale.=TRUE)
+var = pca_result[1]$sdev ^ 2
+sum(var[1:3]) / sum(var)
+```
+
+# 8.2)
+```{r}
+Pframe <- pca_result[2]$rotation[,1:2]
+P <- data.matrix(Pframe)
+plot(data.matrix(qdat) %*% P)
+plot(Pframe)
+biplot(pca_result)
+```
+
+# Based on the first plot, most variations are captured by the first two principle
+# components (because scatters mostly lie on a line). That is, roughly speaking the 
+# data is linearly explainable and effective compression can be achieved.
+# Most vehicles tend to have low values on the first two principle components.
